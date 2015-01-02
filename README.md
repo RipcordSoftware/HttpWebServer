@@ -28,3 +28,4 @@ public static void Main(string[] args)
     }
 }
 ```
+The Start() method accepts two delegate parameters. When a request arrives `RequestCallback` is invoked with  `HttpWebRequest` and `HttpWebResponse` parameters. Both these types are very similar to their namesake types in `System.Net`. If you handled the request in the delegate then return true, otherwise return false.
