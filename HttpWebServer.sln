@@ -21,6 +21,6 @@ Global
 		{F2AB258C-3FD8-4D46-B8C0-F4BBCF220216}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = HttpWebServer\HttpWebServer.csproj
+		StartupItem = HttpWebServerExample\HttpWebServerExample.csproj
 	EndGlobalSection
 EndGlobal
