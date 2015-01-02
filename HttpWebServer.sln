@@ -3,12 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpWebServer", "HttpWebServer\HttpWebServer.csproj", "{F2AB258C-3FD8-4D46-B8C0-F4BBCF220216}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpWebServerExample", "HttpWebServerExample\HttpWebServerExample.csproj", "{5B563700-51EB-4DD2-B1ED-FBCD715518D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5B563700-51EB-4DD2-B1ED-FBCD715518D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B563700-51EB-4DD2-B1ED-FBCD715518D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B563700-51EB-4DD2-B1ED-FBCD715518D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B563700-51EB-4DD2-B1ED-FBCD715518D8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F2AB258C-3FD8-4D46-B8C0-F4BBCF220216}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F2AB258C-3FD8-4D46-B8C0-F4BBCF220216}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2AB258C-3FD8-4D46-B8C0-F4BBCF220216}.Release|Any CPU.ActiveCfg = Release|Any CPU
