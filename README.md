@@ -13,18 +13,18 @@ Example
 ---
 It is very simple to get things started:
 ```C#
-        public static void Main(string[] args)
-        {
-            var bindings = new HttpWebServer.Binding[] { new HttpWebServer.Binding("127.0.0.1", port, false) };
-            var config = new HttpWebServer.Config();
+public static void Main(string[] args)
+{
+    var bindings = new HttpWebServer.Binding[] { new HttpWebServer.Binding("127.0.0.1", port, false) };
+    var config = new HttpWebServer.Config();
 
-            using (var server = new HttpWebServer(bindings, config))
-            {
-                server.Start(RequestCallback, RequestContinueCallback);
+    using (var server = new HttpWebServer(bindings, config))
+    {
+        server.Start(RequestCallback, RequestContinueCallback);
 
-                Console.WriteLine("Listening on port {0}", port);
+        Console.WriteLine("Listening on port {0}", port);
 
-                System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
-            }
-        }
+        System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+    }
+}
 ```
