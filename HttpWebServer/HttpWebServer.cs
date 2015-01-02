@@ -89,7 +89,7 @@ namespace RipcordSoftware.HttpWebServer
 
         public class Config
         {
-            public Config(int socketBacklog, int keepAliveTimeout, int keepAliveTimeoutGrace, int receiveTimeoutPeriod, int maxKeepAliveResponses, int maxRequestChunkSize)
+            public Config(int socketBacklog = 256, int keepAliveTimeout = 30, int keepAliveTimeoutGrace = 5, int receiveTimeoutPeriod = 30, int maxKeepAliveResponses = 100, int maxRequestChunkSize = 16 * 1024)
             {
                 SocketBacklog = socketBacklog;
                 KeepAliveTimeout = keepAliveTimeout;
@@ -253,6 +253,8 @@ namespace RipcordSoftware.HttpWebServer
                             }
 
                             HandleRequest(request, response);
+
+                            response.Close();
 
                             requestBuffer.ReleaseBuffers();
                             requestBuffer = null;
