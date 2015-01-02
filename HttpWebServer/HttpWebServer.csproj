@@ -29,6 +29,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="Ionic.Zlib">
+      <HintPath>..\DotNetZipLib\zlib-v1.9\Release\Ionic.Zlib.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
