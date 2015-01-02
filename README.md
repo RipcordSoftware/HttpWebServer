@@ -29,3 +29,5 @@ public static void Main(string[] args)
 }
 ```
 The Start() method accepts two delegate parameters. When a request arrives `RequestCallback` is invoked with  `HttpWebRequest` and `HttpWebResponse` parameters. Both these types are very similar to their namesake types in `System.Net`. If you handled the request in the delegate then return true, otherwise return false.
+
+`RequestContinueCallback` is invoked when a `POST` request is received with an `Expect: 100-Continue` header. See http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html.
