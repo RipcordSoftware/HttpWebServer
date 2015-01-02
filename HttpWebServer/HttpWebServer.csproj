@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F2AB258C-3FD8-4D46-B8C0-F4BBCF220216}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>RipcordSoftware.HttpWebServer</RootNamespace>
+    <AssemblyName>RipcordSoftware.HttpWebServer</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="HttpWebBuffer.cs" />
+    <Compile Include="HttpWebBufferManager.cs" />
+    <Compile Include="HttpWebMimeTypes.cs" />
+    <Compile Include="HttpWebRequest.cs" />
+    <Compile Include="HttpWebRequestHeaders.cs" />
+    <Compile Include="HttpWebRequestStream.cs" />
+    <Compile Include="HttpWebResponse.cs" />
+    <Compile Include="HttpWebResponseStream.cs" />
+    <Compile Include="HttpWebServer.cs" />
+    <Compile Include="HttpWebServerException.cs" />
+    <Compile Include="HttpWebSocket.cs" />
+    <Compile Include="HttpWebStringBuilderPool.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>
