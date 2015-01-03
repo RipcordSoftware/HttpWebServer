@@ -60,3 +60,4 @@ Differences and Missing Parts
 -------------
 * Exceptions are derived from `HttpWebServerException`/ApplicationException and not from the `System.Net` exception types
 * There is currently no support for SSL
+* HTTP/1.0 clients are not supported, for example pointing `wget` at `HttpWebServer` may result in chunked responses which wget doesn't know how to handle. Use `curl` instead - or PR 1.0 support in if it really matters to you.
