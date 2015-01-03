@@ -55,3 +55,8 @@ GET: /partials/faq.html, 304
 GET: /partials/services.html, 304
 ```
 The example site is part of an AngularJS Tutorial series by Nike Kaye.
+
+Differences and Missing Parts
+-------------
+* Exceptions are derived from `HttpWebServerException`/ApplicationException and not from the `System.Net` exception types
+* There is currently no support for SSL
