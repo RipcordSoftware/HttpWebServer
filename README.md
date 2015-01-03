@@ -54,7 +54,7 @@ GET: /partials/about.html, 304
 GET: /partials/faq.html, 304
 GET: /partials/services.html, 304
 ```
-The example site is part of an AngularJS Tutorial series by Nike Kaye.
+The example site is part of an AngularJS Tutorial series by Nike Kaye. You can find a complete live running instance here: http://httpwebserver.ripcordsoftware.com.
 
 Differences and Missing Parts
 -------------
