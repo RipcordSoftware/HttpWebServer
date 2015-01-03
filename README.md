@@ -32,4 +32,25 @@ The Start() method accepts two delegate parameters. When a request arrives `Requ
 
 `RequestContinueCallback` is invoked when a `POST` request is received with an `Expect: 100-Continue` header. If the delegate returns true then the web server will allow the client to continue to `POST` the body, otherwise the connection is closed. If the parameter passed to Start() is null then the request is always handled. For more info on `100-Continue` see http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html.
 
-In the `HttpWebServerExample` project in the solution there is a static web server example. The code serves static files from the `www` sub-directory under the application root directory. See `HandleRequest()` in `StaticWebServer.cs` for the implementation.
+In the `HttpWebServerExample` project in the solution there is a static web server example. The code serves static files from the `www` sub-directory under the application root directory. To get the example running you should get a copy of `MonoDevelop` 5.x, open the sln and start the `HttpWebServerExample` in debug mode. When the web server is running you should see output like this:
+```
+Listening on port 3010
+GET: /index.html, 200
+GET: /css/bootstrap.min.css, 200
+GET: /css/bootstrap-theme.min.css, 200
+GET: /css/font-awesome.min.css, 200
+GET: /css/main.css, 200
+GET: /js/angular-route.min.js, 200
+GET: /js/bootstrap.min.js, 200
+GET: /js/jquery.min.js, 200
+GET: /js/angular.min.js, 200
+GET: /js/main.js, 200
+GET: /templates/header.html, 200
+GET: /templates/footer.html, 200
+GET: /partials/home.html, 200
+GET: /fonts/fontawesome-webfont.woff, 304
+GET: /partials/pricing.html, 304
+GET: /partials/about.html, 304
+GET: /partials/faq.html, 304
+GET: /partials/services.html, 304
+```
