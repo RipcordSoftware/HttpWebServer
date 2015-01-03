@@ -15,7 +15,7 @@ Build from `MonoDevelop` or from the command line:
 ```shell
 xbuild HttpWebServer.sln
 ```
-To build in release mode execute `xbuild` with the additional parameter: `/p:configuration:Release`.
+To build in release mode execute `xbuild` with the additional parameter: `/p:configuration=Release`.
 
 Example
 ---
