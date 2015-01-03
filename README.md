@@ -32,7 +32,7 @@ The Start() method accepts two delegate parameters. When a request arrives `Requ
 
 `RequestContinueCallback` is invoked when a `POST` request is received with an `Expect: 100-Continue` header. If the delegate returns true then the web server will allow the client to continue to `POST` the body, otherwise the connection is closed. If the parameter passed to Start() is null then the request is always handled. For more info on `100-Continue` see http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html.
 
-In the `HttpWebServerExample` project in the solution there is a static web server example. The code serves static files from the `www` sub-directory under the application root directory. To get the example running you should get a copy of `MonoDevelop` 5.x, open the sln and start the `HttpWebServerExample` in debug mode. When the web server is running you should see output like this:
+In the `HttpWebServerExample` project in the solution there is a static web server example. The code serves static files from the `www` sub-directory under the application root directory. To get the example running you should get a copy of `MonoDevelop` 5.x, open the sln and start the `HttpWebServerExample` in debug mode. When the web server is running you should see output on the console like this:
 ```
 Listening on port 3010
 GET: /index.html, 200
@@ -54,3 +54,4 @@ GET: /partials/about.html, 304
 GET: /partials/faq.html, 304
 GET: /partials/services.html, 304
 ```
+The example site is part of an AngularJS Tutorial series by Nike Kaye.
