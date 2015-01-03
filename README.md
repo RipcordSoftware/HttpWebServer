@@ -9,6 +9,14 @@ The HttpWebServer is a C# web server implementation designed to drop-in replace 
 
 HttpWebServer runs under Mono 3.x and .NET 4.5 and above.
 
+Building
+----
+Build from `MonoDevelop` or from the command line:
+```shell
+xbuild HttpWebServer.sln
+```
+To build in release mode execute `xbuild` with the additional parameter: `/p:configuration:Release`.
+
 Example
 ---
 It is very simple to get things started:
