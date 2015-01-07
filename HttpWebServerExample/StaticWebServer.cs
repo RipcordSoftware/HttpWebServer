@@ -8,6 +8,7 @@ namespace HttpWebServerExample
 {
     public class StaticWebServer
     {
+        #region Types
         private class ContentTypeInfo
         {
             public ContentTypeInfo(string extension, string contentType, bool compressible)
@@ -23,7 +24,9 @@ namespace HttpWebServerExample
 
             public bool Compressible { get; protected set; }
         }
+        #endregion
 
+        #region Private fields
         private static readonly Dictionary<string, ContentTypeInfo> contentTypeLookup = new Dictionary<string, ContentTypeInfo>()
         {
             { "jpg", new ContentTypeInfo("jpg", @"image/jpg", false) },
@@ -40,60 +43,19 @@ namespace HttpWebServerExample
             { "woff", new ContentTypeInfo("woff", @"application/font-woff", false) },
             { "svg", new ContentTypeInfo("svg", @"image/svg+xml", true) }
         };
+        #endregion
 
-        private static ContentTypeInfo GetContentTypeInfo(string extn)
-        {
-            ContentTypeInfo info = null;
-
-            if (extn.Contains("/"))
-            {
-                extn = System.IO.Path.GetExtension(extn);
-            }
-
-            if (extn.StartsWith("."))
-            {
-                extn = extn.Substring(1);
-            }
-
-            contentTypeLookup.TryGetValue(extn, out info);
-            return info;
-        }
-
-        private static string UrlAppendPath(string url, string path)
-        {
-            var appendedUrl = url;
-
-            if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(path))
-            {
-                var terminated = url.EndsWith("/");
-                var prefixed = path.StartsWith("/");
-
-                if (terminated && prefixed)
-                {
-                    appendedUrl = url + path.Substring(1);
-                }
-                else if (!terminated && !prefixed)
-                {
-                    appendedUrl = url + "/" + path;
-                }
-                else
-                {
-                    appendedUrl = url + path;
-                }
-            }
-
-            return appendedUrl;
-        }
-
+        #region Public methods
         public static bool HandleRequest(HttpWebRequest request, HttpWebResponse response)
         {
             bool handled = false;
 
-            if (request.HttpMethod == "GET")
+            var filePath = "www" + request.Uri;
+
+            if (request.HttpMethod == "GET" && ValidateUriPath(filePath))
             {
                 try
                 {
-                    var filePath = "www" + request.Uri;
                     var fileInfo = new FileInfo(filePath);
 
                     if (fileInfo.Attributes == FileAttributes.Directory)
@@ -163,6 +125,115 @@ namespace HttpWebServerExample
 
             return handled;
         }
+        #endregion
+
+        #region Private methods
+        private static ContentTypeInfo GetContentTypeInfo(string extn)
+        {
+            ContentTypeInfo info = null;
+
+            if (extn.Contains("/"))
+            {
+                extn = System.IO.Path.GetExtension(extn);
+            }
+
+            if (extn.StartsWith("."))
+            {
+                extn = extn.Substring(1);
+            }
+
+            contentTypeLookup.TryGetValue(extn, out info);
+            return info;
+        }
+
+        private static string UrlAppendPath(string url, string path)
+        {
+            var appendedUrl = url;
+
+            if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(path))
+            {
+                var terminated = url.EndsWith("/");
+                var prefixed = path.StartsWith("/");
+
+                if (terminated && prefixed)
+                {
+                    appendedUrl = url + path.Substring(1);
+                }
+                else if (!terminated && !prefixed)
+                {
+                    appendedUrl = url + "/" + path;
+                }
+                else
+                {
+                    appendedUrl = url + path;
+                }
+            }
+
+            return appendedUrl;
+        }
+
+        /// <summary>
+        /// Validates the URI path
+        /// </summary>
+        /// <returns><c>true</c>, if URI path was validated, <c>false</c> otherwise</returns>
+        private static bool ValidateUriPath(string uri)
+        {
+            // turn encoded . chars into real .
+            if (uri.IndexOf("%2e", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                uri = uri.Replace("%2e", ".").Replace("%2E", ".");
+            }
+
+            // we are not interested in further validation unless there is at least one pair of ..
+            bool validated = uri.IndexOf("..", StringComparison.Ordinal) < 0;
+
+            if (!validated)
+            {
+                // decode /
+                if (uri.IndexOf("%2f", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    uri = uri.Replace("%2f", "/").Replace("%2F", "/");
+                }
+
+                // decode /
+                if (uri.IndexOf("%u2216", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    uri = uri.Replace("%u2216", "/").Replace("%U2216", "/");
+                }
+
+                // we don't allow any /../ which walk outside the web root
+                validated = ValidatePathDepth(uri);
+            }
+
+            return validated;
+        }
+
+        /// <summary>
+        /// Validates the URI path depth doesn't go negative (ie. outside the web root)
+        /// </summary>
+        /// <returns><c>true</c>, if path depth was validated, <c>false</c> otherwise.</returns>
+        private static bool ValidatePathDepth(string uri)
+        {
+            var depth = 0;
+
+            if (uri.Length > 1)
+            {
+                for (var i = uri.IndexOf('/', 1); depth >= 0 && i > 0 && i < (uri.Length - 1); i = uri.IndexOf('/', i + 1))
+                {
+                    if (i > 3 && uri[i - 1] == '.' && uri[i - 2] == '.' && uri[i - 3] == '/')
+                    {
+                        depth--;
+                    }
+                    else
+                    {
+                        depth++;
+                    }
+                }
+            }
+
+            return depth >= 0;
+        }
+        #endregion
     }
 }
 
