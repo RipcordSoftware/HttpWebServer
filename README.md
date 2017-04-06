@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/RipcordSoftware/HttpWebServer.svg?branch=master)](https://travis-ci.org/RipcordSoftware/HttpWebServer)
+[![Build status](https://ci.appveyor.com/api/projects/status/39spqtdcw9jihnyu?svg=true)](https://ci.appveyor.com/project/craigminihan/httpwebserver)
 
 HttpWebServer
 =============
