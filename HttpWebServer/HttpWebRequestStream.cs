@@ -10,24 +10,24 @@ namespace RipcordSoftware.HttpWebServer
         private class RequestStream : Stream
         {        
             #region Private fields
-            private readonly HttpWebSocket socket;
-            private MemoryStream bodyStream;
-            private readonly int receiveTimeoutPeriod;
-            private readonly long? contentLength;
-            private long position = 0;
+            private readonly HttpWebSocket _socket;
+            private MemoryStream _bodyStream;
+            private readonly int _receiveTimeoutPeriod;
+            private readonly long? _contentLength;
+            private long _position = 0;
             #endregion
 
             public RequestStream(HttpWebSocket socket, HttpWebBuffer bodyBuffer, int receiveTimeoutPeriod, long? contentLength)
             {
-                this.socket = socket;
-                this.receiveTimeoutPeriod = receiveTimeoutPeriod;
+                _socket = socket;
+                _receiveTimeoutPeriod = receiveTimeoutPeriod;
 
                 if (bodyBuffer != null)
                 {
-                    bodyStream = new MemoryStream(bodyBuffer.Buffer, 0, bodyBuffer.DataLength, false);
+                    _bodyStream = new MemoryStream(bodyBuffer.Buffer, 0, bodyBuffer.DataLength, false);
                 }
 
-                this.contentLength = contentLength;
+                _contentLength = contentLength;
             }
 
             #region implemented abstract members of Stream
@@ -93,7 +93,7 @@ namespace RipcordSoftware.HttpWebServer
             {
                 get
                 {
-                    return position;
+                    return _position;
                 }
                 set
                 {
@@ -108,39 +108,39 @@ namespace RipcordSoftware.HttpWebServer
             {        
                 int bytesRead = 0;
 
-                if (bodyStream != null)
+                if (_bodyStream != null)
                 {
-                    bytesRead = bodyStream.Read(buffer, offset, count);
+                    bytesRead = _bodyStream.Read(buffer, offset, count);
 
                     offset += bytesRead;
                     count -= bytesRead;
 
                     if (peek)
                     {
-                        bodyStream.Position -= bytesRead;
+                        _bodyStream.Position -= bytesRead;
                     }
                     else
                     {
-                        position += bytesRead;
+                        _position += bytesRead;
 
-                        if (bodyStream.Position >= bodyStream.Length)
+                        if (_bodyStream.Position >= _bodyStream.Length)
                         {
-                            bodyStream = null;
+                            _bodyStream = null;
                         }
                     }
                 }
 
                 // if we have a content length then calculate if we are at the end of the request or not
-                bool endOfRequest = contentLength.HasValue && position >= contentLength.Value;
+                bool endOfRequest = _contentLength.HasValue && _position >= _contentLength.Value;
 
                 if (count > 0 && !endOfRequest)
                 {
                     var flags = peek ? SocketFlags.Peek : SocketFlags.None;
 
                     // if we have already read some bytes on this pass then we don't need a timeout
-                    var timeout = bytesRead > 0 ? 0 : receiveTimeoutPeriod * 1000;
+                    var timeout = bytesRead > 0 ? 0 : _receiveTimeoutPeriod * 1000;
 
-                    var socketBytes = socket.Receive(timeout, buffer, offset, count, flags);
+                    var socketBytes = _socket.Receive(timeout, buffer, offset, count, flags);
 
                     // if we have a timeout value and no bytes then we should throw
                     if (timeout > 0 && socketBytes <= 0)
@@ -152,7 +152,7 @@ namespace RipcordSoftware.HttpWebServer
                     if (socketBytes > 0)
                     {
                         bytesRead += socketBytes;
-                        position += socketBytes;
+                        _position += socketBytes;
                     }
                 }
 
@@ -178,17 +178,25 @@ namespace RipcordSoftware.HttpWebServer
             #endregion
 
             #region Private fields
-            private static readonly byte[] lastChunkSig = new byte[] { 0x30, 0x0d, 0x0a, 0x0d, 0x0a };
+            private static readonly byte[] _lastChunkSig = new byte[] { 0x30, 0x0d, 0x0a, 0x0d, 0x0a };
 
-            private MemoryStream chunkStream;
+            private readonly Interfaces.IHttpWebBufferManager _bufferManager;
+            private MemoryStream _chunkStream;
 
-            private readonly int maxRequestChunkSize;
+            private readonly int _maxRequestChunkSize;
             #endregion
 
             #region Constuctor
-            public ChunkedRequestStream(HttpWebSocket socket, HttpWebBuffer bodyBuffer, int receiveTimeoutPeriod, int maxRequestChunkSize) : base(socket, bodyBuffer, receiveTimeoutPeriod, null)
+            public ChunkedRequestStream(HttpWebSocket socket, HttpWebBuffer bodyBuffer, int receiveTimeoutPeriod, int maxRequestChunkSize) : 
+                this(socket, bodyBuffer, receiveTimeoutPeriod, maxRequestChunkSize, HttpWebServerContext.BufferManager)
             {
-                this.maxRequestChunkSize = maxRequestChunkSize;
+            }
+
+            public ChunkedRequestStream(HttpWebSocket socket, HttpWebBuffer bodyBuffer, int receiveTimeoutPeriod, int maxRequestChunkSize, Interfaces.IHttpWebBufferManager bufferManager) : 
+                base(socket, bodyBuffer, receiveTimeoutPeriod, null)
+            {
+                _bufferManager = bufferManager;
+                _maxRequestChunkSize = maxRequestChunkSize;
             }
             #endregion
 
@@ -203,19 +211,19 @@ namespace RipcordSoftware.HttpWebServer
             {
                 int bytesRead = 0;
 
-                if (chunkStream == null || chunkStream.Position == chunkStream.Length)
+                if (_chunkStream == null || _chunkStream.Position == _chunkStream.Length)
                 {
-                    if (chunkStream != null)
+                    if (_chunkStream != null)
                     {
-                        HttpWebBufferManager.ReleaseMemoryStream(ref chunkStream);
+                        _bufferManager.ReleaseMemoryStream(ref _chunkStream);
                     }
 
-                    chunkStream = GetChunk();
+                    _chunkStream = GetChunk();
                 }
 
-                if (chunkStream != null)
+                if (_chunkStream != null)
                 {
-                    bytesRead = chunkStream.Read(buffer, offset, count);
+                    bytesRead = _chunkStream.Read(buffer, offset, count);
                 }
 
                 return bytesRead;
@@ -297,14 +305,14 @@ namespace RipcordSoftware.HttpWebServer
 
                 if (tempBufferDataLength > 0)
                 {
-                    var chunkHeader = GetChunkHeader(tempBuffer, tempBufferDataLength, maxRequestChunkSize);
+                    var chunkHeader = GetChunkHeader(tempBuffer, tempBufferDataLength, _maxRequestChunkSize);
 
                     // eat the header since we know the size now
                     base.Read(tempBuffer, 0, chunkHeader.HeaderSize);
 
                     if (chunkHeader.BlockSize > 0)
                     {
-                        chunkStream = HttpWebBufferManager.GetMemoryStream(chunkHeader.BlockSize);
+                        chunkStream = _bufferManager.GetMemoryStream(chunkHeader.BlockSize);
                         var chunkBuffer = chunkStream.GetBuffer();
 
                         int bytesRead = 0;
@@ -388,7 +396,7 @@ namespace RipcordSoftware.HttpWebServer
                 int sigIndex = 0;
                 for (int i = 0; i < dataLength; i++)
                 {
-                    if (buffer[i] == lastChunkSig[sigIndex])
+                    if (buffer[i] == _lastChunkSig[sigIndex])
                     {
                         sigIndex++;
                     }
@@ -398,7 +406,7 @@ namespace RipcordSoftware.HttpWebServer
                     }
                 }
 
-                return sigIndex == lastChunkSig.Length;
+                return sigIndex == _lastChunkSig.Length;
             }
             #endregion
         }

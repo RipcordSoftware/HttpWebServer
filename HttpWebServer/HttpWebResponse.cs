@@ -78,20 +78,22 @@ namespace RipcordSoftware.HttpWebServer
         #endregion
 
         #region Private fields
-        private readonly HttpWebSocket socket;
-        private readonly int keepAliveTimeout;
-        private Stream stream;
+        private readonly HttpWebSocket _socket;
+        private readonly Interfaces.IHttpWebBufferManager _bufferManager;
+        private readonly int _keepAliveTimeout;
+        private Stream _stream;
 
-        private string version;
+        private string _version;
 
-        private readonly HttpWebStringBuilderPool headerStringPool = new HttpWebStringBuilderPool(256, 4096);
+        private readonly HttpWebStringBuilderPool _headerStringPool = new HttpWebStringBuilderPool(256, 4096);
         #endregion
 
         #region Constructor
-        internal HttpWebResponse(HttpWebSocket socket, int keepAliveTimeout)
+        internal HttpWebResponse(HttpWebSocket socket, int keepAliveTimeout, Interfaces.IHttpWebBufferManager bufferManager)
         {
-            this.socket = socket;
-            this.keepAliveTimeout = keepAliveTimeout;
+            _socket = socket;
+            _bufferManager = bufferManager;
+            _keepAliveTimeout = keepAliveTimeout;
 
             Headers = new ResponseHeaders();
 
@@ -108,13 +110,13 @@ namespace RipcordSoftware.HttpWebServer
         { 
             get
             {
-                return version;
+                return _version;
             }
 
             set
             {            
                 // remove the leading HTTP/ from the string
-                if (value != null && value.StartsWith("HTTP/") && value.Length > 5)
+                if (value != null && value.StartsWith("HTTP/", StringComparison.Ordinal) && value.Length > 5)
                 {
                     value = value.Substring(5);
                 }
@@ -139,7 +141,7 @@ namespace RipcordSoftware.HttpWebServer
                         throw new ArgumentException("Version");
                 }
 
-                version = value;
+                _version = value;
             }
         }
 
@@ -186,13 +188,13 @@ namespace RipcordSoftware.HttpWebServer
 
         public bool IsChunked { get { var encoding = TransferEncoding; return encoding != null && encoding.Contains("chunked"); } }
 
-        public bool IsResponseActive { get { return stream != null; } }
+        public bool IsResponseActive { get { return _stream != null; } }
         #endregion
 
         #region Public methods
         public Stream GetResponseStream(string acceptEncoding)
         {
-            if (stream != null)
+            if (_stream != null)
             {
                 throw new HttpWebServerResponseException("GetResponseStream() may not be called more than once");
             }
@@ -232,26 +234,26 @@ namespace RipcordSoftware.HttpWebServer
 
             var headers = GetHeaders();
                     
-            stream = new HttpWebResponseStream(this.socket, headers, KeepAlive, IsChunked);
+            _stream = new HttpWebResponseStream(_socket, headers, KeepAlive, IsChunked, _bufferManager);
 
             if (!string.IsNullOrEmpty(ContentEncoding))
             {
                 if (ContentEncoding.Contains("deflate"))
                 {
-                    stream = new DeflateStream(stream, CompressionMode.Compress, CompressionLevel.Default);
+                    _stream = new DeflateStream(_stream, CompressionMode.Compress, CompressionLevel.Default);
                 }
                 else if (ContentEncoding.Contains("gzip"))
                 {
-                    stream = new GZipStream(stream, CompressionMode.Compress, CompressionLevel.Default);
+                    _stream = new GZipStream(_stream, CompressionMode.Compress, CompressionLevel.Default);
                 }
             }
 
-            return stream;
+            return _stream;
         }
             
         public void Close()
         {
-            if (stream == null)
+            if (_stream == null)
             {
                 // there is no body, set the content length correctly
                 if (KeepAlive)
@@ -271,9 +273,9 @@ namespace RipcordSoftware.HttpWebServer
                 }
             }
 
-            if (stream != null)
+            if (_stream != null)
             {
-                stream.Close();
+                _stream.Close();
             }
         }
 
@@ -292,11 +294,11 @@ namespace RipcordSoftware.HttpWebServer
 
         public void RawSend(int timeout, byte[] buffer, int bufferDataLength, bool flush = false)
         {
-            socket.Send(timeout, buffer, 0, bufferDataLength);
+            _socket.Send(timeout, buffer, 0, bufferDataLength);
 
             if (flush)
             {
-                socket.Flush();
+                _socket.Flush();
             }
         }
         #endregion
@@ -304,11 +306,11 @@ namespace RipcordSoftware.HttpWebServer
         #region Private methods
         private byte[] GetHeaders()
         { 
-            var headerTextBuffer = headerStringPool.Acquire();
+            var headerTextBuffer = _headerStringPool.Acquire();
 
             if (KeepAlive)
             {
-                Headers["Keep-Alive"] = "timeout=" + keepAliveTimeout;
+                Headers["Keep-Alive"] = "timeout=" + _keepAliveTimeout;
             }
             else
             {
@@ -342,7 +344,7 @@ namespace RipcordSoftware.HttpWebServer
 
             var bytes = ASCIIEncoding.ASCII.GetBytes(headerTextBuffer.ToString());
 
-            headerStringPool.Release(headerTextBuffer);
+            _headerStringPool.Release(headerTextBuffer);
 
             return bytes;
         }

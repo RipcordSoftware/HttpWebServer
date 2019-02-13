@@ -10,20 +10,20 @@ namespace RipcordSoftware.HttpWebServer
     public class HttpWebStringBuilderPool
     {
         #region Private fields
-        private readonly StringBuilder[] pool;
-        private int index = 0;
-        private readonly int stringLength;
+        private readonly StringBuilder[] _pool;
+        private int _index = 0;
+        private readonly int _stringLength;
         #endregion
 
         #region Constructor
         public HttpWebStringBuilderPool(int poolSize = 16, int stringLength = 1024)
         {
-            pool = new StringBuilder[poolSize];
-            this.stringLength = stringLength;
+            _pool = new StringBuilder[poolSize];
+            _stringLength = stringLength;
 
-            for (int i = 0; i < pool.Length; i++)
+            for (int i = 0; i < _pool.Length; i++)
             {
-                pool[i] = new StringBuilder(this.stringLength);
+                _pool[i] = new StringBuilder(_stringLength);
             }
         }
         #endregion
@@ -34,13 +34,13 @@ namespace RipcordSoftware.HttpWebServer
         /// </summary>
         public StringBuilder Acquire()
         {
-            int thisIndex = Interlocked.Increment(ref index) - 1;
-            thisIndex %= pool.Length;
+            int thisIndex = Interlocked.Increment(ref _index) - 1;
+            thisIndex %= _pool.Length;
 
-            var builder = Interlocked.Exchange(ref pool[thisIndex], null);
+            var builder = Interlocked.Exchange(ref _pool[thisIndex], null);
             if (builder == null)
             {
-                builder = new StringBuilder(stringLength);
+                builder = new StringBuilder(_stringLength);
             }
 
             // make sure the builder is clear
@@ -60,7 +60,7 @@ namespace RipcordSoftware.HttpWebServer
             if (builder != null)
             {                   
                 // get the current index into the pool
-                int currIndex = index % pool.Length;
+                int currIndex = _index % _pool.Length;
 
                 // the most likely null entry in the pool is the last entry we were at, so try there first
                 if (currIndex > 0)
@@ -68,19 +68,19 @@ namespace RipcordSoftware.HttpWebServer
                     currIndex--;
                 }
 
-                for (int i = currIndex; !released && i < pool.Length; i++)
+                for (int i = currIndex; !released && i < _pool.Length; i++)
                 {
-                    if (pool[i] == null)
+                    if (_pool[i] == null)
                     {
-                        released = Interlocked.CompareExchange(ref pool[i], builder, null) == null;
+                        released = Interlocked.CompareExchange(ref _pool[i], builder, null) == null;
                     }
                 }
 
                 for (int i = 0; !released && i < currIndex; i++)
                 {
-                    if (pool[i] == null)
+                    if (_pool[i] == null)
                     {
-                        released = Interlocked.CompareExchange(ref pool[i], builder, null) == null;
+                        released = Interlocked.CompareExchange(ref _pool[i], builder, null) == null;
                     }
                 }
             }

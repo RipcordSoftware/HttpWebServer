@@ -15,7 +15,7 @@ namespace RipcordSoftware.HttpWebServer
         public class QueryStringInfo
         {
             #region Private fields
-            private readonly SortedDictionary<string, string> queryString = new SortedDictionary<string, string>();
+            private readonly SortedDictionary<string, string> _queryString = new SortedDictionary<string, string>();
             #endregion
 
             #region Constructors
@@ -42,7 +42,7 @@ namespace RipcordSoftware.HttpWebServer
                                     value = System.Web.HttpUtility.UrlDecode(parts[1]);
                                 }
 
-                                this.queryString[name] = value;
+                                _queryString[name] = value;
                             }
                         }
                     }
@@ -56,7 +56,7 @@ namespace RipcordSoftware.HttpWebServer
                 get
                 {
                     string value = null;
-                    queryString.TryGetValue(name, out value);
+                    _queryString.TryGetValue(name, out value);
                     return value;
                 }
             }
@@ -65,7 +65,7 @@ namespace RipcordSoftware.HttpWebServer
             {
                 get
                 {
-                    var keys = new List<string>(queryString.Keys);
+                    var keys = new List<string>(_queryString.Keys);
                     return keys.ToArray();
                 }
             }
@@ -74,7 +74,7 @@ namespace RipcordSoftware.HttpWebServer
             {
                 var queryString = new System.Text.StringBuilder();
 
-                foreach (var pair in this.queryString)
+                foreach (var pair in _queryString)
                 {
                     if (queryString.Length == 0)
                     {
@@ -95,10 +95,10 @@ namespace RipcordSoftware.HttpWebServer
         #endregion
 
         #region Private fields
-        private HttpWebRequestStream requestStream;
+        private HttpWebRequestStream _requestStream;
 
-        private readonly System.Net.IPEndPoint localEndPoint;
-        private readonly System.Net.IPEndPoint remoteEndPoint;
+        private readonly System.Net.IPEndPoint _localEndPoint;
+        private readonly System.Net.IPEndPoint _remoteEndPoint;
         #endregion
 
         #region Constructor
@@ -106,10 +106,10 @@ namespace RipcordSoftware.HttpWebServer
         {
             Headers = headers;
             QueryString = new QueryStringInfo(Headers.QueryString);
-            requestStream = new HttpWebRequestStream(socket, bodyBuffer, receiveTimeoutPeriod, maxRequestChunkSize, headers.ContentLength);
+            _requestStream = new HttpWebRequestStream(socket, bodyBuffer, receiveTimeoutPeriod, maxRequestChunkSize, headers.ContentLength);
 
-            localEndPoint = socket.LocalEndPoint;
-            remoteEndPoint = socket.RemoteEndPoint;
+            _localEndPoint = socket.LocalEndPoint;
+            _remoteEndPoint = socket.RemoteEndPoint;
         }
         #endregion
 
@@ -120,15 +120,15 @@ namespace RipcordSoftware.HttpWebServer
         { 
             if (Headers.IsGZipEncoded)
             {
-                return new GZipStream(requestStream, CompressionMode.Decompress);
+                return new GZipStream(_requestStream, CompressionMode.Decompress);
             }
             else if (Headers.IsDeflateEncoded)
             {
-                return new DeflateStream(requestStream, CompressionMode.Decompress);
+                return new DeflateStream(_requestStream, CompressionMode.Decompress);
             }
             else
             {
-                return requestStream; 
+                return _requestStream; 
             }
         }
 
@@ -169,8 +169,8 @@ namespace RipcordSoftware.HttpWebServer
             }
         }
 
-        public System.Net.IPEndPoint LocalEndPoint { get { return localEndPoint; } }
-        public System.Net.IPEndPoint RemoteEndPoint { get { return remoteEndPoint; } }
+        public System.Net.IPEndPoint LocalEndPoint { get { return _localEndPoint; } }
+        public System.Net.IPEndPoint RemoteEndPoint { get { return _remoteEndPoint; } }
         #endregion
     }
 }

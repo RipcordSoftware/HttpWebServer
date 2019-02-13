@@ -6,15 +6,15 @@ namespace RipcordSoftware.HttpWebServer
 {
     public class HttpWebRequestHeaders
     {
-        private readonly SortedDictionary<string, string> headers = null;
-        private long? contentLength = null;
+        private readonly SortedDictionary<string, string> _headers = null;
+        private long? _contentLength = null;
 
         private HttpWebRequestHeaders(HttpWebBuffer buffer)
         {
             var headerBlock = Encoding.ASCII.GetString(buffer.Buffer, 0, buffer.DataLength);
             var headerLines = headerBlock.Split(new char[] { '\r', '\n' });
 
-            headers = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            _headers = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (headerLines.Length > 0)
             {
@@ -53,7 +53,7 @@ namespace RipcordSoftware.HttpWebServer
                     {
                         var header = line.Substring(0, seperatorIndex);
                         var value = line.Substring(seperatorIndex + 2).Trim();
-                        headers.Add(header, value);
+                        _headers.Add(header, value);
                     }
                 }
 
@@ -129,17 +129,17 @@ namespace RipcordSoftware.HttpWebServer
         { 
             get 
             { 
-                if (!contentLength.HasValue)
+                if (!_contentLength.HasValue)
                 {
                     var length = this["Content-Length"];
-                    contentLength = length != null ? long.Parse(length) : (long?)null; 
+                    _contentLength = length != null ? long.Parse(length) : (long?)null; 
                 }
 
-                return contentLength;
+                return _contentLength;
             } 
         }
 
-        public string this[string header] { get { string value = null; headers.TryGetValue(header, out value); return value; } }
+        public string this[string header] { get { string value = null; _headers.TryGetValue(header, out value); return value; } }
 
         public bool HasContentLength { get { return ContentLength != null; } }
         public bool IsChunkEncoded { get { var encoding = TransferEncoding; return encoding != null && encoding.Contains("chunked"); } }

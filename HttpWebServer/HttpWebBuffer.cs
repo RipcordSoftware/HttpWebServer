@@ -5,56 +5,64 @@ namespace RipcordSoftware.HttpWebServer
     public class HttpWebBuffer : IDisposable
     {
         #region Private fields
-        private byte[] buffer;
-        private int dataLength;
+        private byte[] _buffer;
+        private int _dataLength;
+        private readonly Interfaces.IHttpWebBufferManager _bufferManager;
         #endregion
 
         #region Constructor
-        public HttpWebBuffer(byte[] buffer, int bufferOffset, int dataLength)
+        public HttpWebBuffer(byte[] buffer, int bufferOffset, int dataLength) :
+            this(buffer, bufferOffset, dataLength, HttpWebServerContext.BufferManager)
+        {
+
+        }
+
+        public HttpWebBuffer(byte[] buffer, int bufferOffset, int dataLength, Interfaces.IHttpWebBufferManager bufferManager)
         {
             if (bufferOffset + dataLength - buffer.Length > 0)
             {
                 throw new ArgumentOutOfRangeException();
             }
 
-            this.buffer = HttpWebBufferManager.GetBuffer(dataLength);
-            this.dataLength = dataLength;
+            _bufferManager = bufferManager;
+            _buffer = _bufferManager.GetBuffer(dataLength);
+            _dataLength = dataLength;
 
-            Array.Copy(buffer, bufferOffset, this.buffer, 0, dataLength);
+            Array.Copy(buffer, bufferOffset, _buffer, 0, dataLength);
         }
         #endregion
 
         #region Public methods
         public void Append(byte[] appendBuffer, int appendBufferOffset, int appendDataLength)
         {
-            var newDataLength = dataLength + appendDataLength;
+            var newDataLength = _dataLength + appendDataLength;
 
-            if (newDataLength > buffer.Length)
+            if (newDataLength > _buffer.Length)
             {
-                var newBuffer = HttpWebBufferManager.GetBuffer(newDataLength);
+                var newBuffer = _bufferManager.GetBuffer(newDataLength);
 
-                Array.Copy(buffer, 0, newBuffer, 0, dataLength);
-                Array.Copy(appendBuffer, appendBufferOffset, newBuffer, dataLength, appendDataLength);
+                Array.Copy(_buffer, 0, newBuffer, 0, _dataLength);
+                Array.Copy(appendBuffer, appendBufferOffset, newBuffer, _dataLength, appendDataLength);
 
-                HttpWebBufferManager.ReleaseBuffer(buffer);
+                _bufferManager.ReleaseBuffer(_buffer);
 
-                buffer = newBuffer;
-                dataLength = newDataLength;
+                _buffer = newBuffer;
+                _dataLength = newDataLength;
             }
             else
             {
-                Array.Copy(appendBuffer, appendBufferOffset, buffer, dataLength, appendDataLength);
-                dataLength += appendDataLength;
+                Array.Copy(appendBuffer, appendBufferOffset, _buffer, _dataLength, appendDataLength);
+                _dataLength += appendDataLength;
             }
         }
 
-        public void ReleaseBuffers()
+        public void ReleaseBuffer()
         {
-            if (buffer != null)
+            if (_buffer != null)
             {
-                HttpWebBufferManager.ReleaseBuffer(buffer);
-                buffer = null;
-                dataLength = 0;
+                _bufferManager.ReleaseBuffer(_buffer);
+                _buffer = null;
+                _dataLength = 0;
             }
         }
         #endregion
@@ -64,28 +72,26 @@ namespace RipcordSoftware.HttpWebServer
         {
             get
             {
-                if (index < 0 || index >= dataLength)
+                if (index < 0 || index >= _dataLength)
                 {
                     throw new IndexOutOfRangeException();
                 }
 
-                return buffer[index];
+                return _buffer[index];
             }
         }
             
-        public int DataLength { get { return dataLength; } }
+        public int DataLength { get { return _dataLength; } }
 
-        public byte[] Buffer { get { return buffer; } }
-        public int BufferLength { get { return buffer.Length; } }
+        public byte[] Buffer { get { return _buffer; } }
+        public int BufferLength { get { return _buffer.Length; } }
         #endregion
 
         #region IDisposable implementation
-
         public void Dispose()
         {
-            ReleaseBuffers();
+            ReleaseBuffer();
         }
-
         #endregion
     }
 }

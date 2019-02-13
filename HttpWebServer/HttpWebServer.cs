@@ -110,15 +110,17 @@ namespace RipcordSoftware.HttpWebServer
         #endregion
 
         #region Private fields
-        private readonly List<Socket> listenSockets;
-        private readonly Binding[] bindings;
-        private readonly Config config;
+        private static readonly Interfaces.IHttpWebBufferManager _bufferManager = HttpWebServerContext.BufferManager;
 
-        private RequestCallback requestCallback;
-        private Request100ContinueCallback requestContinueCallback;
+        private readonly List<Socket> _listenSockets;
+        private readonly Binding[] _bindings;
+        private readonly Config _config;
 
-        private readonly static string requestContinueHeader = "HTTP/1.1 100 Continue" + EndOfLine + EndOfLine;
-        private readonly static byte[] requestContinueHeaderBytes = Encoding.UTF8.GetBytes(requestContinueHeader);
+        private RequestCallback _requestCallback;
+        private Request100ContinueCallback _requestContinueCallback;
+
+        private static readonly string _requestContinueHeader = "HTTP/1.1 100 Continue" + EndOfLine + EndOfLine;
+        private static readonly byte[] _requestContinueHeaderBytes = Encoding.UTF8.GetBytes(_requestContinueHeader);
         #endregion
 
         #region Constructor
@@ -129,12 +131,12 @@ namespace RipcordSoftware.HttpWebServer
                 throw new HttpWebServerException("You must supply at least one binding address");
             }
                     
-            this.bindings = bindings;
-            this.config = config;
+            _bindings = bindings;
+            _config = config;
 
-            listenSockets = new List<Socket>(bindings.Length);
+            _listenSockets = new List<Socket>(bindings.Length);
 
-            foreach (var binding in this.bindings)
+            foreach (var binding in _bindings)
             {
                 var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
@@ -143,7 +145,7 @@ namespace RipcordSoftware.HttpWebServer
                 socket.Bind(ep);
                 socket.Listen(config.SocketBacklog);
 
-                listenSockets.Add(socket);
+                _listenSockets.Add(socket);
             }
         }
         #endregion
@@ -153,15 +155,15 @@ namespace RipcordSoftware.HttpWebServer
         {
             if (requestCallback != null)
             {
-                this.requestCallback = requestCallback;
+                _requestCallback = requestCallback;
 
                 if (requestContinueCallback != null)
                 {
-                    this.requestContinueCallback = requestContinueCallback;
+                    _requestContinueCallback = requestContinueCallback;
                 }
             }
 
-            foreach (var socket in listenSockets)
+            foreach (var socket in _listenSockets)
             {
                 AcceptRequestAsync(socket);
             }
@@ -197,10 +199,10 @@ namespace RipcordSoftware.HttpWebServer
 
             try
             {
-                while (socket.Connected && responseCount <= config.MaxKeepAliveResponses)
+                while (socket.Connected && responseCount <= _config.MaxKeepAliveResponses)
                 {
                     // we use the keep-alive timeout if we are waiting for a header to start and the normal receive timeout otherwise
-                    var timeout = requestBuffer == null ? config.KeepAliveTimeoutTotal : config.ReceiveTimeoutPeriod;
+                    var timeout = requestBuffer == null ? _config.KeepAliveTimeoutTotal : _config.ReceiveTimeoutPeriod;
 
                     int bufferDataLength = socket.Receive(timeout * 1000, buffer);
 
@@ -230,7 +232,7 @@ namespace RipcordSoftware.HttpWebServer
                     if (requestBuffer.DataLength > (MaxRequestHeaderSize + buffer.Length))
                     {
                         // return Forbidden and close the connection
-                        var response = new HttpWebResponse(socket, config.KeepAliveTimeout);
+                        var response = new HttpWebResponse(socket, _config.KeepAliveTimeout, _bufferManager);
                         response.StatusCode = 403;
                         response.StatusDescription = "Forbidden";
                         response.KeepAlive = false;
@@ -242,12 +244,12 @@ namespace RipcordSoftware.HttpWebServer
                         HttpWebBuffer bodyBuffer;
                         if (HttpWebRequestHeaders.GetHeaders(requestBuffer, out headers, out bodyBuffer))
                         {
-                            var request = new HttpWebRequest(socket, headers, bodyBuffer, config.ReceiveTimeoutPeriod, config.MaxRequestChunkSize);
-                            var response = new HttpWebResponse(socket, config.KeepAliveTimeout);
+                            var request = new HttpWebRequest(socket, headers, bodyBuffer, _config.ReceiveTimeoutPeriod, _config.MaxRequestChunkSize);
+                            var response = new HttpWebResponse(socket, _config.KeepAliveTimeout, _bufferManager);
 
                             // if we exceed the number of keep-alive responses then we want to close this connection
                             // NOTE: the request handler can override this
-                            if (responseCount >= config.MaxKeepAliveResponses)
+                            if (responseCount >= _config.MaxKeepAliveResponses)
                             {
                                 response.KeepAlive = false;
                             }
@@ -256,14 +258,14 @@ namespace RipcordSoftware.HttpWebServer
 
                             response.Close();
 
-                            requestBuffer.ReleaseBuffers();
+                            requestBuffer.ReleaseBuffer();
                             requestBuffer = null;
 
                             // if we exceed the number of keep-alive responses but the request handler has reset the KeepAlive flag then we must
                             // set the responseCount back to the limit so the connection isn't just dropped
-                            if (responseCount >= config.MaxKeepAliveResponses && response.KeepAlive)
+                            if (responseCount >= _config.MaxKeepAliveResponses && response.KeepAlive)
                             {
-                                responseCount = config.MaxKeepAliveResponses;
+                                responseCount = _config.MaxKeepAliveResponses;
                             }
                         }
                     }
@@ -289,7 +291,7 @@ namespace RipcordSoftware.HttpWebServer
                 // if there was an active request then free the buffers
                 if (requestBuffer != null)
                 {
-                    requestBuffer.ReleaseBuffers();
+                    requestBuffer.ReleaseBuffer();
                 }
 
                 // if the socket is still connected then we must shut it down
@@ -313,14 +315,14 @@ namespace RipcordSoftware.HttpWebServer
 
                 if (string.Compare(request.Headers["Expect"], "100-continue", true) == 0)
                 {
-                    if (requestContinueCallback != null)
+                    if (_requestContinueCallback != null)
                     {
-                        responseContinue = requestContinueCallback(request);
+                        responseContinue = _requestContinueCallback(request);
                     }
 
                     if (responseContinue)
                     {
-                        response.RawSend(0, requestContinueHeaderBytes, requestContinueHeaderBytes.Length, true);
+                        response.RawSend(0, _requestContinueHeaderBytes, _requestContinueHeaderBytes.Length, true);
                     }
                     else
                     {
@@ -332,9 +334,9 @@ namespace RipcordSoftware.HttpWebServer
 
                 if (responseContinue)
                 {
-                    if (requestCallback != null)
+                    if (_requestCallback != null)
                     {
-                        sentResponse = requestCallback(request, response);
+                        sentResponse = _requestCallback(request, response);
                     }
 
                     if (!sentResponse)
@@ -368,7 +370,7 @@ namespace RipcordSoftware.HttpWebServer
 
         public void Dispose()
         {
-            foreach (var socket in listenSockets)
+            foreach (var socket in _listenSockets)
             {
                 socket.Close();
             }

@@ -11,37 +11,37 @@ namespace RipcordSoftware.HttpWebServer
         /// <summary>
         /// The TCP socket
         /// </summary>
-        private Socket socket;
+        private Socket _socket;
 
         /// <summary>
         /// A locking object for the TCP socket
         /// </summary>
-        private readonly object socketLock = new object();
+        private readonly object _socketLock = new object();
 
         /// <summary>
         /// An event we use to synchronize with an asynchronous socket send response
         /// </summary>
         private readonly AutoResetEvent completedEvent = new AutoResetEvent(false);
 
-        private readonly System.Net.IPEndPoint localEndPoint;
-        private readonly System.Net.IPEndPoint remoteEndPoint;
+        private readonly System.Net.IPEndPoint _localEndPoint;
+        private readonly System.Net.IPEndPoint _remoteEndPoint;
         #endregion
 
         #region Constructors
         public HttpWebSocket(Socket socket)
         {
-            localEndPoint = (System.Net.IPEndPoint)socket.LocalEndPoint;
-            remoteEndPoint = (System.Net.IPEndPoint)socket.RemoteEndPoint;
+            _localEndPoint = (System.Net.IPEndPoint)socket.LocalEndPoint;
+            _remoteEndPoint = (System.Net.IPEndPoint)socket.RemoteEndPoint;
 
-            this.socket = socket;
+            _socket = socket;
         }
         #endregion
 
         #region Public methods
         public void Close()
         {
-            socket.Shutdown(SocketShutdown.Both);
-            socket.Disconnect(true);
+            _socket.Shutdown(SocketShutdown.Both);
+            _socket.Disconnect(true);
         }
 
         public int Send(int timeout, byte[] buffer, int offset, int length)
@@ -55,7 +55,7 @@ namespace RipcordSoftware.HttpWebServer
 
             if (timeout > 0)
             {
-                lock (socketLock)
+                lock (_socketLock)
                 {
                     var args = new SocketAsyncEventArgs();
                     args.SetBuffer(buffer, offset, count);
@@ -69,7 +69,7 @@ namespace RipcordSoftware.HttpWebServer
                         }
                     };                
 
-                    socket.SendAsync(args);
+                    _socket.SendAsync(args);
 
                     if (completedEvent.WaitOne(timeout))
                     {
@@ -79,9 +79,9 @@ namespace RipcordSoftware.HttpWebServer
             }
             else
             {
-                lock (socketLock)
+                lock (_socketLock)
                 {
-                    sentBytes = SyncSend(socket, buffer, offset, count, flags);
+                    sentBytes = SyncSend(_socket, buffer, offset, count, flags);
                 }
             }
 
@@ -106,23 +106,23 @@ namespace RipcordSoftware.HttpWebServer
             {
                 if (timeout > 0)
                 {
-                    socket.ReceiveTimeout = timeout;
-                    receivedBytes = socket.Receive(buffer, offset, count, flags);
+                    _socket.ReceiveTimeout = timeout;
+                    receivedBytes = _socket.Receive(buffer, offset, count, flags);
                 }
                 else if (timeout == 0)
                 {
-                    var available = socket.Available;
+                    var available = _socket.Available;
                     if (available > 0)
                     {
-                        socket.ReceiveTimeout = -1;
+                        _socket.ReceiveTimeout = -1;
                         var receiveBytes = Math.Min(available, count);
-                        receivedBytes = socket.Receive(buffer, offset, receiveBytes, flags);
+                        receivedBytes = _socket.Receive(buffer, offset, receiveBytes, flags);
                     }
                 }
                 else
                 {
-                    socket.ReceiveTimeout = -1;
-                    receivedBytes = socket.Receive(buffer, offset, count, flags);
+                    _socket.ReceiveTimeout = -1;
+                    receivedBytes = _socket.Receive(buffer, offset, count, flags);
                 }
             }
             catch (SocketException ex)
@@ -146,12 +146,12 @@ namespace RipcordSoftware.HttpWebServer
         #endregion
 
         #region Public properties
-        public bool Connected { get { return socket.Connected; } }
-        public int Available { get { return socket.Available; } }
-        public bool NoDelay { get { return socket.NoDelay; } set { socket.NoDelay = value; } }
+        public bool Connected { get { return _socket.Connected; } }
+        public int Available { get { return _socket.Available; } }
+        public bool NoDelay { get { return _socket.NoDelay; } set { _socket.NoDelay = value; } }
 
-        public System.Net.IPEndPoint LocalEndPoint { get { return localEndPoint; } }
-        public System.Net.IPEndPoint RemoteEndPoint { get { return remoteEndPoint; } }
+        public System.Net.IPEndPoint LocalEndPoint { get { return _localEndPoint; } }
+        public System.Net.IPEndPoint RemoteEndPoint { get { return _remoteEndPoint; } }
         #endregion
 
         #region Private methods
